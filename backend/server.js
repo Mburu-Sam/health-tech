@@ -26,6 +26,10 @@ app.use('/api/doctor', doctorRoutes);
 app.use('/api/patient', patientRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/billing', billingRoutes);
+app.get("/", (req, res) => {
+  res.send("Backend is running");
+});
+
 
 io.on('connection', socket => {
   console.log('socket connected', socket.id);
