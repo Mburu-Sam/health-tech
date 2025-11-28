@@ -1,4 +1,3 @@
-// backend/models/Doctor.js
 const mongoose = require('mongoose');
 
 const doctorSchema = new mongoose.Schema({

@@ -6,6 +6,122 @@ const Invoice = require('../models/Invoice');
 const { generateInvoicePDF } = require('../utils/pdfGenerator');
 const xlsx = require('xlsx');
 
+function sanitizeUser(user) {
+  const obj = user.toObject ? user.toObject() : user;
+  delete obj.password;
+  return obj;
+}
+
+async function listUsers(req, res) {
+  try {
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
+    const skip = (page - 1) * limit;
+    const search = req.query.search?.trim();
+    const role = req.query.role && req.query.role !== 'all' ? req.query.role : undefined;
+
+    const query = {};
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
+    if (role) query.role = role;
+
+    const [users, total] = await Promise.all([
+      User.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .select('-password'),
+      User.countDocuments(query)
+    ]);
+
+    res.json({
+      data: users,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.max(Math.ceil(total / limit), 1)
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+async function createUser(req, res) {
+  try {
+    const { name, email, password, role, phone, meta, approved } = req.body;
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ message: 'Name, email, password and role are required' });
+    }
+
+    if (await User.findOne({ email })) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+
+    const user = new User({ name, email, password, role, phone, meta, approved });
+    await user.save();
+    res.status(201).json(sanitizeUser(user));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+async function updateUser(req, res) {
+  try {
+    const user = await User.findById(req.params.id).select('+password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const updatableFields = ['name', 'email', 'role', 'phone', 'meta', 'approved'];
+    updatableFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        user[field] = req.body[field];
+      }
+    });
+
+    if (req.body.password) {
+      user.password = req.body.password;
+    }
+
+    await user.save();
+    res.json(sanitizeUser(user));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+async function deleteUser(req, res) {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (user.role === 'doctor') {
+      const doctor = await Doctor.findOne({ user: user._id });
+      if (doctor) {
+        await Appointment.deleteMany({ doctor: doctor._id });
+        await doctor.deleteOne();
+      }
+    } else if (user.role === 'patient') {
+      const patient = await Patient.findOne({ user: user._id });
+      if (patient) {
+        await Appointment.deleteMany({ patient: patient._id });
+        await patient.deleteOne();
+      }
+    } else {
+      await Appointment.deleteMany({ createdBy: user._id });
+    }
+
+    await user.deleteOne();
+    res.json({ message: 'User deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
 async function listDoctors(req, res) {
   const doctors = await Doctor.find().populate('user');
   res.json(doctors);
@@ -80,5 +196,17 @@ async function exportUsers(req, res) {
 }
 
 module.exports = {
-  listDoctors, approveDoctor, rejectDoctor, admitPatient, dischargePatient, downloadInvoice, listAppointments, approveAppointment, exportUsers
+  listUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  listDoctors,
+  approveDoctor,
+  rejectDoctor,
+  admitPatient,
+  dischargePatient,
+  downloadInvoice,
+  listAppointments,
+  approveAppointment,
+  exportUsers
 };

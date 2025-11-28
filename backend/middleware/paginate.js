@@ -1,4 +1,3 @@
-// backend/middleware/paginate.js
 function paginate(model) {
     return async (req, res, next) => {
       const page = Math.max(1, parseInt(req.query.page || '1'));

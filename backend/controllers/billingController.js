@@ -1,4 +1,3 @@
-// backend/controllers/billingController.js
 const Invoice = require('../models/Invoice');
 const Patient = require('../models/Patient');
 

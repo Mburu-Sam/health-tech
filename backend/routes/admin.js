@@ -1,4 +1,3 @@
-// backend/routes/admin.js
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
@@ -6,6 +5,11 @@ const { permit } = require('../middleware/roles');
 const adminController = require('../controllers/adminController');
 
 router.use(auth, permit('admin'));
+
+router.get('/users', adminController.listUsers);
+router.post('/users', adminController.createUser);
+router.put('/users/:id', adminController.updateUser);
+router.delete('/users/:id', adminController.deleteUser);
 
 router.get('/doctors', adminController.listDoctors);
 router.post('/doctors/:id/approve', adminController.approveDoctor);

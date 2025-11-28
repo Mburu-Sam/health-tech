@@ -1,4 +1,3 @@
-// backend/controllers/patientController.js
 const User = require('../models/User');
 const Patient = require('../models/Patient');
 const Appointment = require('../models/Appointment');
@@ -38,6 +37,16 @@ async function listInvoices(req, res) {
   res.json(invoices);
 }
 
+async function appointments(req, res) {
+  const patient = await Patient.findOne({ user: req.user._id });
+  if (!patient) return res.status(404).json({ message: 'Patient profile not found' });
+  const list = await Appointment.find({ patient: patient._id })
+    .populate('doctor')
+    .sort({ datetime: 1 })
+    .limit(100);
+  res.json(list);
+}
+
 async function downloadInvoice(req, res) {
   const invoice = await Invoice.findById(req.params.id);
   if (!invoice) return res.status(404).json({ message: 'Not found' });
@@ -46,4 +55,4 @@ async function downloadInvoice(req, res) {
   generateInvoicePDF(invoice, patient, res);
 }
 
-module.exports = { registerPatient, me, bookAppointment, listInvoices, downloadInvoice };
+module.exports = { registerPatient, me, bookAppointment, listInvoices, appointments, downloadInvoice };

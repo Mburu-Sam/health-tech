@@ -1,4 +1,3 @@
-// backend/utils/pdfGenerator.js
 const PDFDocument = require('pdfkit');
 
 function generateInvoicePDF(invoice, patient, res) {
