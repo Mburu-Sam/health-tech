@@ -1,11 +1,20 @@
+Here is the updated README section with each link on its own clean line.
+
+You can paste this into your README.
+
+---
+
 # HEALTHTECH
 
 Full Hospital Management System built with the MERN stack
 
 ## Live Links
 
-Frontend: [https://health-tech-pj6f.vercel.app/](https://health-tech-pj6f.vercel.app/)
-Backend: [https://health-techp-git-main-samwel-mburus-projects.vercel.app/](https://health-techp-git-main-samwel-mburus-projects.vercel.app/)
+Frontend
+[https://health-tech-pj6f.vercel.app/](https://health-tech-pj6f.vercel.app/)
+
+Backend
+[https://health-techp-git-main-samwel-mburus-projects.vercel.app/](https://health-techp-git-main-samwel-mburus-projects.vercel.app/)
 
 ## Overview
 
